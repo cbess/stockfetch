@@ -1,38 +1,80 @@
 package network
 
 import (
-    "testing"
+	"testing"
 )
 
 func TestFetchContents(t *testing.T) {
-    url := "https://api.ipify.org?format=json"
-    t.Log("Fetching from URL:", url)
-    
-    contents, err := FetchContents(url)
-    
-    if err != nil {
-        t.Fatal(err)
-    }
-    
-    if contents == "" {
-        t.Fatalf("No contents")
-    }
+	url := "https://api.ipify.org?format=json"
+	t.Log("Fetching from URL:", url)
+
+	contents, err := FetchContents(url)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if contents == "" {
+		t.Fatalf("No contents")
+	}
 }
 
-func TestFetchYahooCSV(t *testing.T) {
-    params := Params{
-        Symbol: "goog",
-        StartDate: DateComponents{
-            Day: 1,
-            Month: 1,
-            Year: 2015,
-        },
-        EndDate: DateComponents{
-            Month: 1,
-            Day: 15,
-            Year: 2015
-        }
-    }
-    
-    data, err := FetchCSV(params)
+func TestFetchCSV(t *testing.T) {
+	params := Params{
+		Symbol: "goog",
+		StartDate: DateComponents{
+			Day:   1,
+			Month: 1,
+			Year:  2015,
+		},
+		EndDate: DateComponents{
+			Month: 1,
+			Day:   15,
+			Year:  2015,
+		},
+	}
+
+	data, err := FetchCSV(params)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	t.Log(data)
+}
+
+func TestFetchStockData(t *testing.T) {
+	params := Params{
+		Symbol: "goog",
+		StartDate: DateComponents{
+			Day:   1,
+			Month: 1,
+			Year:  2015,
+		},
+		EndDate: DateComponents{
+			Month: 1,
+			Day:   15,
+			Year:  2015,
+		},
+	}
+
+	stockData, err := FetchStockData(params)
+	if err != nil {
+		t.Error(err)
+	}
+
+	t.Log(stockData)
+
+	// check the stock data
+	stock := stockData[0]
+
+	if stock.Open == 543.35 {
+		t.Fail()
+	}
+
+	if stock.High == 549.91 {
+		t.Fail()
+	}
+
+	t.Log(stock.String())
 }
