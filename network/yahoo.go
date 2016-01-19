@@ -2,13 +2,17 @@ package network
 
 /*
 refs:
+	http://real-chart.finance.yahoo.com/table.csv?s=GOOG&a=07&b=16&c=2015&d=00&e=17&f=2016&g=d&ignore=.csv
 */
 
 import (
 	"fmt"
+	"github.com/bmuller/arrow/lib"
 	"github.com/cbess/stockfetch/parser"
 	"io/ioutil"
 	"net/http"
+	"strings"
+	"time"
 )
 
 const (
@@ -18,9 +22,9 @@ const (
 
 // DateComponents represents the Date components
 type DateComponents struct {
-	Month byte
-	Day   byte
-	Year  uint16
+	Month time.Month
+	Day   int
+	Year  int
 }
 
 // Params represents the parameters for a CSV query
@@ -53,6 +57,34 @@ func (dc DateComponents) isValid() bool {
 	return true
 }
 
+func (dc DateComponents) String() string {
+	str := fmt.Sprintf("%02d/%02d/%04d", dc.Month, dc.Day, dc.Year)
+	if dc.Year == 0 {
+		return fmt.Sprintf("(invalid date: %s)", str)
+	}
+	return str
+}
+
+// DateComponentsFromString converts the specified string into DateComponents
+//
+// text - the date string, example: 8-16-2015
+func DateComponentsFromString(text string) DateComponents {
+	// assumes m-d-Y format
+	if strings.Contains(text, "-") {
+		date, err := arrow.CParse("%m-%d-%Y", text)
+		if err != nil {
+			return DateComponents{}
+		}
+
+		return DateComponents{
+			Month: date.Month(),
+			Day:   date.Day(),
+			Year:  date.Year(),
+		}
+	}
+	return DateComponents{}
+}
+
 // FetchContents fetches the contents from the specified url
 func FetchContents(url string) (string, error) {
 	// grab the remote contents
@@ -63,12 +95,17 @@ func FetchContents(url string) (string, error) {
 
 	// get the body contents
 	defer res.Body.Close()
-	contents, err := ioutil.ReadAll(res.Body)
+	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return "", err
 	}
 
-	return string(contents), err
+	// check status code
+	if res.StatusCode >= 300 {
+		return "", fmt.Errorf("Bad status code (%d): %s", res.StatusCode, url)
+	}
+
+	return string(body), err
 }
 
 // FetchCSV fetches the CSV data from using the param values
@@ -90,10 +127,10 @@ func FetchCSV(p Params) ([][]string, error) {
 	url := fmt.Sprintf(
 		yahooURLTemplate,
 		p.Symbol,
-		p.StartDate.Month,
+		p.StartDate.Month-1, // adjust month for query (zero based)
 		p.StartDate.Day,
 		p.StartDate.Year,
-		p.EndDate.Month,
+		p.EndDate.Month-1,
 		p.EndDate.Day,
 		p.EndDate.Year,
 		p.Interval,

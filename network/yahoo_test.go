@@ -4,6 +4,31 @@ import (
 	"testing"
 )
 
+func newDateComponent() Params {
+	params := Params{
+		Symbol: "goog",
+		StartDate: DateComponents{
+			Day:   1,
+			Month: 1,
+			Year:  2016,
+		},
+		EndDate: DateComponents{
+			Month: 1,
+			Day:   15,
+			Year:  2016,
+		},
+	}
+	return params
+}
+
+func TestDateComponents(t *testing.T) {
+	dc := DateComponentsFromString("01-01-2015")
+
+	if dc.String() != "01/01/2015" {
+		t.Fatalf("Wrong date: %s", dc)
+	}
+}
+
 func TestFetchContents(t *testing.T) {
 	url := "https://api.ipify.org?format=json"
 	t.Log("Fetching from URL:", url)
@@ -17,23 +42,12 @@ func TestFetchContents(t *testing.T) {
 	if contents == "" {
 		t.Fatalf("No contents")
 	}
+
+	t.Log(contents)
 }
 
 func TestFetchCSV(t *testing.T) {
-	params := Params{
-		Symbol: "goog",
-		StartDate: DateComponents{
-			Day:   1,
-			Month: 1,
-			Year:  2015,
-		},
-		EndDate: DateComponents{
-			Month: 1,
-			Day:   15,
-			Year:  2015,
-		},
-	}
-
+	params := newDateComponent()
 	data, err := FetchCSV(params)
 
 	if err != nil {
@@ -44,20 +58,7 @@ func TestFetchCSV(t *testing.T) {
 }
 
 func TestFetchStockData(t *testing.T) {
-	params := Params{
-		Symbol: "goog",
-		StartDate: DateComponents{
-			Day:   1,
-			Month: 1,
-			Year:  2015,
-		},
-		EndDate: DateComponents{
-			Month: 1,
-			Day:   15,
-			Year:  2015,
-		},
-	}
-
+	params := newDateComponent()
 	stockData, err := FetchStockData(params)
 	if err != nil {
 		t.Error(err)
@@ -77,4 +78,16 @@ func TestFetchStockData(t *testing.T) {
 	}
 
 	t.Log(stock.String())
+}
+
+// TestFetchStockDataFail this test should fail because the query params are not valid (Bad date)
+func TestFetchStockDataFail(t *testing.T) {
+	params := newDateComponent()
+	params.StartDate.Year = 2099
+	_, err := FetchStockData(params)
+	if err != nil {
+		t.Log(err)
+	} else {
+		t.Fatal("Should have failed:", params)
+	}
 }

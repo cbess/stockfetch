@@ -54,11 +54,21 @@ func parseInt32(value string) int32 {
 func TextToCSV(text string) [][]string {
 	lines := strings.Split(text, "\n")
 	collection := [][]string{}
+
+	// should we skip the header
+	hasHeader := false
+	if len(lines) > 1 {
+		// first row should be the header
+		hasHeader = true
+	}
+
 	// parse each line
 	for idx, line := range lines {
 		// ignore the first line
-		if idx == 0 {
-			continue
+		if hasHeader {
+			if idx == 0 {
+				continue
+			}
 		}
 
 		// get data from each line
