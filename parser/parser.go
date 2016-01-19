@@ -64,7 +64,7 @@ func TextToCSV(text string) [][]string {
 
 	// parse each line
 	for idx, line := range lines {
-		// ignore the first line
+		// ignore the first row
 		if hasHeader {
 			if idx == 0 {
 				continue
